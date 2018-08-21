@@ -1,3 +1,23 @@
+# Copyright (C) President and Fellows of Harvard College and 
+# Trustees of Mount Holyoke College, 2014, 2015, 2016, 2017.
+
+# This program is free software: you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public
+#   License along with this program.  If not, see
+#   <http://www.gnu.org/licenses/>.
+
+########################## DDGStatement.R ############################
+
+
 # Extension of DDGStatement that keeps track of individual statements
 # within functions.
 setClass("RDTStatement",
@@ -45,6 +65,7 @@ methods::setMethod ("initialize",
 #' @param script.num - the script number used to find the script in the sourced script table
 #' @param parseData - the object created by the parser that gives us source position information
 #' @return a DDG statement
+#' @noRd
 
 .ddg.construct.DDGStatement <- function (expr, pos, script.name, script.num, parseData) {
   #print(paste(".ddg.construct.DDGStatement: expr =", expr))
@@ -65,6 +86,7 @@ methods::setMethod ("initialize",
 #' source position information
 #' @return a list of DDTStatements or an empty list if this is not a function
 #' declaration or a control construct.
+#' @noRd
 
 .ddg.parse.contained <- function (cmd, script.name, parseData) {
   # print("In .ddg.parse.contained")
@@ -112,6 +134,7 @@ methods::setMethod ("initialize",
 #' @param parseData information from the parser used to find line numbers
 #' @param func.body body of function
 #' @return DDG statement objects for statements in the function
+#' @noRd
 
 .ddg.parse.contained.function <- function (cmd, script.name, parseData, func.body) {
   #print(paste(".ddg.parse.contained.function: func.body =", deparse(func.body)))
@@ -137,6 +160,7 @@ methods::setMethod ("initialize",
 #' @param parseData information from the parser used to find line numbers
 #' @param parent parent statement
 #' @return DDG statement objects for statements in if statement
+#' @noRd
 
 .ddg.parse.contained.if <- function (cmd, script.name, parseData, parent) {
   block.stmts <- list()
@@ -188,6 +212,7 @@ methods::setMethod ("initialize",
 #' @param parsed.cmd control construct statement
 #' @param st.type statement type (for, while, repeat, simple block)
 #' @return DDG statement objects for statements in the control construct
+#' @noRd
 
 .ddg.parse.contained.control <- function(cmd, script.name, parseData, parsed.cmd, 
     st.type) {
@@ -213,6 +238,7 @@ methods::setMethod ("initialize",
 #' construct it is enclosed in a block
 #' @param block input statement(s)
 #' @return a block containing the statement(s)
+#' @noRd
 
 .ddg.ensure.in.block <- function(block) {
   if (is.symbol(block) || block[[1]] != "{") call("{", block)
