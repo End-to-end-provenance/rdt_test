@@ -40,6 +40,7 @@
 
 #' .ddg.init.data.nodes initializes the information needed to manage data nodes.
 #' @return nothing
+#' @noRd
 
 .ddg.init.data.nodes <- function () {
   .ddg.set("ddg.data.nodes", .ddg.create.data.node.rows()) 
@@ -48,25 +49,28 @@
   # Name of the last variable that was a plot created by ggplot
   .ddg.set (".ddg.last.ggplot", "")
   
-  # Set max.snapshot.size.  Make sure it is not already set, as
-  # someone may have called prov.set.detail.
-  if (!.ddg.is.set("ddg.max.snapshot.size")) {
-    .ddg.set("ddg.max.snapshot.size", 0)
+  # Set snapshot.size.  Make sure it is not already set, 
+  # as someone may have called prov.set.detail.
+  
+  if (!.ddg.is.set("ddg.snapshot.size")) {
+    .ddg.set("ddg.snapshot.size", 0)
   }
 }
 
-#' .ddg.max.snapshot.size returns the current maximum size for snapshots 
+#' .ddg.snapshot.size returns the current maximum size for snapshots 
 #' in kilobytes.
 #' @return maximum snapshot size in KB
+#' @noRd
 
-.ddg.max.snapshot.size <- function() {
-  return(.ddg.get("ddg.max.snapshot.size"))
+.ddg.snapshot.size <- function() {
+  return(.ddg.get("ddg.snapshot.size"))
 }
 
 #' .ddg.is.data.type returns TRUE for any type of data node.
 #' This is used for type-checking. 
 #' @param type data node type.
 #' @return true for any type of data node
+#' @noRd
 
 .ddg.is.data.type <- function(type) {
   return(type %in% c("Data", "Snapshot", "File", "URL", "Exception"))
@@ -74,6 +78,7 @@
 
 #' .ddg.dnum returns the counter used to assign data node ids
 #' @return the data node id of the last data node created
+#' @noRd
 
 .ddg.dnum <- function() {
   return (.ddg.get("ddg.dnum"))
@@ -84,6 +89,7 @@
 #' than to add one row at a time
 #' @param size the number of rows to add
 #' @return a data frame with size rows, with all columns being empty vectors
+#' @noRd
 
 .ddg.create.data.node.rows <- function (size=100) {
   return (      
@@ -104,6 +110,7 @@
   
 #' .ddg.data.node.table returns the data node table
 #' @return the data node table
+#' @noRd
 
 .ddg.data.node.table <- function() {
   return (.ddg.get("ddg.data.nodes"))
@@ -111,23 +118,11 @@
 
 #' .ddg.data.nodes returns the filled rows of the data node table
 #' @return the filled rows of the data node table
+#' @noRd
 
 .ddg.data.nodes <- function() {
   ddg.data.nodes <- .ddg.get("ddg.data.nodes")
   return (ddg.data.nodes [ddg.data.nodes$ddg.num > 0, ])
-}
-
-#' .ddg.set.hash sets the hash and rw fields for a data node 
-#' @param dnum the id of the node to set
-#' @param hash the hash value to use
-#' @param rw the rw value to use
-#' @return nothing 
-
-.ddg.set.hash <- function (dnum, hash, rw) {
-  ddg.data.nodes <- .ddg.data.node.table()
-  ddg.data.nodes$ddg.hash[dnum] <- hash
-  ddg.data.nodes$ddg.rw[dnum] <- rw
-  .ddg.set("ddg.data.nodes", ddg.data.nodes)
 }
 
 #' .ddg.data.node.exists searches the data node table for a matching
@@ -139,6 +134,7 @@
 #' @param dscope data node scope.  If NULL, uses the closest scope in which
 #' dname is defined
 #' @return true if a node with the given name exists
+#' @noRd
 
 .ddg.data.node.exists <- function(dname, dscope=NULL) {
   if (is.null(dscope)) dscope <- .ddg.get.scope(dname)
@@ -176,6 +172,7 @@
 #' @param dscope (optional) data node scope.  If not provided, it uses
 #' the closest scope in which dname is found
 #' @return the id of the matching data node, or 0 if none was found
+#' @noRd
 
 .ddg.data.number <- function(dname, dscope=NULL) {
   if (is.null(dscope)) dscope <- .ddg.get.scope(dname)
@@ -197,6 +194,7 @@
 #' .ddg.save.debug.data.nodes writes the data nodes to a csv table. Useful for debugging.
 #' The file will be in the debug directory in a file called data-nodes.csv
 #' @return nothing
+#' @noRd
 
 .ddg.save.debug.data.nodes <- function () {
   # Save data nodes table to file.
@@ -218,6 +216,7 @@
 #' @param dtime (optional) timestamp of original file.
 #' @param dloc (optional) path and name of original file.
 #' @return nothing
+#' @noRd
 
 .ddg.record.data <- function(dtype, dname, dvalue, value, dscope, from.env=FALSE, 
                              dtime="", dloc="") {
@@ -265,12 +264,7 @@
   # Output data node.
   #print(".ddg.record.data outputting data node")
   if (dtype == "File") {
-    dhash <- .ddg.calculate.hash(dname)
-    drw <- .ddg.calculate.rw(dname)
-    .ddg.set.hash (ddg.dnum, dhash, drw)
-
-    # .ddg.add.to.hashtable(dname = dname, ddg.dnum = ddg.dnum, dloc = dloc, 
-    #     dvalue = dvalue, dtime = dtime)
+    .ddg.set.hash (dname, ddg.dnum, dloc, dvalue, dtime)
   }
   
   if (.ddg.debug.lib()) {
@@ -296,6 +290,7 @@
 #' the dimensions, and the type of the members of the data structure
 #' @param value the value
 #' @return the type information as a string
+#' @noRd
 
 .ddg.get.val.type.string <- function(value)
 {
@@ -343,6 +338,7 @@
 #' is found, it returns NULL.
 #' @param value the value
 #' @return the type information
+#' @noRd
 
 .ddg.get.val.type <- function(value)
 {
@@ -389,6 +385,7 @@
 #' When inheritance is used, this is the lowest type. 
 #' @param obj object
 #' @return first element returned by class
+#' @noRd
 
 .ddg.get.lowest.class <- function( obj )
 {
@@ -405,6 +402,7 @@
 #' @param dscope scope of data node.
 #' @param from.env if object is from initial environment
 #' @return nothing
+#' @noRd
 
 .ddg.data.node <- function(dtype, dname, dvalue, dscope, from.env=FALSE) {
   #print ("In .ddg.data.node")
@@ -499,15 +497,41 @@
   invisible()
 }
 
+#' .ddg.get.element.size estimates the size in memory of the first 
+#' row (data frame or matrix) or first element (vector, array, or list)
+#' of a complex data object.
+#' @param data a complex data object (data frame, matrix, vector, array,
+#' or list)
+#' @return size in memory of first row or first element
+#' @noRd
+
+.ddg.get.element.size <- function(data) {
+  element <- list()  
+  
+  # data frame or matrix
+  if (is.data.frame(data) || is.matrix(data)) {
+    for (i in 1:ncol(data)) {
+      element[[i]] <- data[1, i, drop=TRUE]
+      if (is.factor(element[[i]])) element[[i]] <- factor(element[[i]])
+    } 
+
+  # vector, list, or array
+  } else {
+    element <- data[1]
+  }
+
+  return(utils::object.size(element))
+}
+
 #' .ddg.snapshot.node creates a data node of type Snapshot. Snapshots
 #' are used for complex data values not written to file by the main
 #' script. The contents of data are written to the file dname.fext
 #' in the DDG directory. Snapshots are also used to capture output
-#' plots and other graphics generated by the R script. 
-#' The user can control the size of the snapshot files by setting the
-#' max.snapshot.size parameter when calling prov.init or prov.run.  If
-#' the user passes in 0, no snapshots are saved.
-#' Instead a data node will be created.  If the user passes in -1,
+#' plots and other graphics generated by the R script. The user 
+#' can control whether snapshots are saved and the size of snapshot
+#' files by setting the parameters snapshots and snapshot.size
+#' when calling prov.init or prov.run.  If snapshots are not saved,
+#' a data node will be created instead.  If the user passes in Inf,
 #' there is no limit on the snapshot size.  If the user passes a value > 0,
 #' if the R value is larger than this size, only the head of the data will
 #' be saved.
@@ -518,6 +542,7 @@
 #' @param dscope (optional) scope of data node.  Default NULL
 #' @param from.env (optional) true if a value set outside the script.  Default FALSE
 #' @return path and name of snapshot file
+#' @noRd
 
 .ddg.snapshot.node <- function(dname, fext, data, save.object = FALSE, 
                                dscope=NULL, from.env=FALSE) {
@@ -525,25 +550,32 @@
   orig.data <- data
   
   # Determine if we should save the entire data
-  max.snapshot.size <- .ddg.max.snapshot.size()
+  snapshot.size <- .ddg.snapshot.size()
   
   # Don't save the data
-  if (max.snapshot.size == 0) {
+  if (snapshot.size == 0) {
     return(.ddg.data.node ("Data", dname, "", dscope, from.env=from.env))
   }
   
-  # object.size returns bytes, but max.snapshot.size is in kilobytes
-  if (max.snapshot.size == -1 || utils::object.size(data) < max.snapshot.size * 1024) {
+  # object.size returns bytes, but snapshot.size is in kilobytes
+  if (snapshot.size == Inf || utils::object.size(data) < snapshot.size * 1024) {
     full.snapshot <- TRUE
   }
   
   else if (is.vector(data) || is.list(data) || is.data.frame(data) || 
            is.matrix(data) || is.array(data)) {
-    # Decide how much data to save
     
-    element.size <- utils::object.size(utils::head(data, 1))
-    num.elements.to.save <- ceiling(max.snapshot.size * 1024 / element.size)
-    if (num.elements.to.save < length(data)) {
+    # Decide how much data to save
+    element.size <- .ddg.get.element.size(data)
+    num.elements.to.save <- ceiling(snapshot.size * 1024 / element.size)
+
+    if (is.data.frame(data) || is.matrix(data) || is.array(data)) {
+      total.length <- nrow(data)
+    } else {
+      total.length <- length(data)
+    }
+
+    if (num.elements.to.save < total.length) {
       data <- utils::head(data, num.elements.to.save)
       full.snapshot <- FALSE
     }
@@ -654,6 +686,7 @@
 #' bmp, png, tiff. 
 #' @param ext file extension.
 #' @return TRUE if the extension passed in is a known graphics type
+#' @noRd
 
 .ddg.supported.graphic <- function(ext){
   return(ext %in% c("jpeg", "jpg", "tiff", "png", "bmp", "pdf"))
@@ -666,6 +699,7 @@
 #' @param dname name of data node.
 #' @param dscope scope of data node.
 #' @return nothing
+#' @noRd
 
 .ddg.file.copy <- function(fname, dname=NULL, dscope=NULL) {
   # Calculate location of original file.
@@ -705,6 +739,7 @@
 #' @param dname - name of data node.
 #' @param dscope (optional) - scope of data node.
 #' @return the full path to the saved file
+#' @noRd
 
 .ddg.file.node <- function(dtype, fname, dname, dscope=NULL) {
   
@@ -739,6 +774,7 @@
 #' @param original the actual url or server connection description
 #' @param saved the name of the file where a copy has been saved
 #' @return nothing
+#' @noRd
 
 .ddg.url.node <- function(original, saved) {
   # Record in data node table
@@ -752,6 +788,7 @@
 #' is basically a hack. There must be a better way to implement it. 
 #' @param value value to test
 #' @return TRUE if the value is in the gg or ggplot class
+#' @noRd
 
 .ddg.is.graphic <- function(value){
   # Matching any of these classes automatically classifies the
@@ -765,6 +802,7 @@
 #' in a separate file. 
 #' @param value value to test
 #' @return TRUE for NULL and for vectors of length 1
+#' @noRd
 
 .ddg.is.simple <- function(value) {
   # Note that is.vector returns TRUE for lists, so we need to check
@@ -782,6 +820,7 @@
 #' as a csv file 
 #' @param value value to test
 #' @return TRUE for vectors longer than 1, and for all matrices and data frames
+#' @noRd
 
 .ddg.is.csv <- function(value) {
   return(!.ddg.is.simple(value) && 
@@ -793,6 +832,7 @@
 #' object by our standards.
 #' @param value value to test
 #' @return TRUE for objects and environments
+#' @noRd
 
 .ddg.is.object <- function(value){
   return(is.object(value) || is.environment(value))
@@ -811,6 +851,7 @@
 #' @param stack (optional) stack to use in determing scope.
 #' @param env (optional) default is NULL
 #' @return nothing
+#' @noRd
 
 .ddg.save.data <- function(name, value, graphic.fext="jpeg", error=FALSE, 
                            scope=NULL, from.env=FALSE, stack=NULL, env=NULL){
@@ -853,6 +894,7 @@
 #' @param value data node value.
 #' @param scope data node scope.
 #' @return nothing
+#' @noRd
 
 .ddg.save.simple <- function(name, value, scope=NULL, from.env=FALSE) {
   # Save extra long strings as snapshot.
@@ -875,6 +917,7 @@
 #' @param scope data node scope.
 #' @param from.env If TRUE, means the value was assigned outside the script
 #' @return nothing
+#' @noRd
 
 .ddg.write.graphic <- function(name, value=NULL, fext="jpeg", scope=NULL, from.env=FALSE){
   # Remember the name of the variable so that we can link to it if ggsave is 
@@ -890,6 +933,7 @@
 #' @param fext file extension.
 #' @param dpfile path and name of file to copy
 #' @return nothing
+#' @noRd
 
 .ddg.graphic.snapshot <-function(fext, dpfile) {
   # pdfs require a separate procedure.
@@ -926,6 +970,7 @@
 #' @param scope data node scope.
 #' @param from.env TRUE if defined outside the script
 #' @return nothing
+#' @noRd
 
 .ddg.write.csv <- function(name, value, scope=NULL, from.env=FALSE) {
   tryCatch(
@@ -945,6 +990,7 @@
 #' by calling as.character on each element in the list. 
 #' @param dvalue a list of values.
 #' @return a string showing the position and value of each list member 
+#' @noRd
 
 .ddg.convert.list.to.string <- function (dvalue) {
   values <- .ddg.remove.tab.and.eol.chars(lapply(dvalue, .ddg.as.character))
@@ -957,6 +1003,7 @@
 #' returns that instead.
 #' @param value a value to convert to a string
 #' @return the value represented as a string
+#' @noRd
 
 .ddg.as.character <- function (value) {
   tryCatch (as.character(value),
